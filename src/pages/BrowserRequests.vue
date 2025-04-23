@@ -135,6 +135,12 @@
                     {{ isLoading ? 'Loading...' : 'Send Request' }}
                 </button>
 
+                <!-- Nouveau bouton pour téléchargement proxy -->
+                <button @click="downloadViaProxy" :disabled="isLoading || !url || !session_id" class="send-request-btn"
+                    style="background-color:#388e3c;margin-top:8px;">
+                    Télécharger via Proxy
+                </button>
+
                 <div v-if="error" class="error">
                     {{ error }}
                 </div>
@@ -311,6 +317,52 @@ export default {
                 .catch(() => {
                     alert('Erreur lors de la copie');
                 });
+        },
+        async downloadViaProxy() {
+            if (!this.url || !this.session_id) {
+                this.error = "URL et Session ID requis pour le téléchargement proxy";
+                return;
+            }
+            this.isLoading = true;
+            this.error = null;
+            try {
+                // Utilise POST pour éviter les limites d'URL et pour la cohérence
+                const resp = await fetch(app_url + '/browser/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        url: this.url,
+                        session_id: this.session_id
+                    })
+                });
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    throw new Error(err.message || "Erreur lors du téléchargement proxy");
+                }
+                // Récupère le nom de fichier depuis l'en-tête
+                const disposition = resp.headers.get('Content-Disposition');
+                let filename = "downloaded_file";
+                if (disposition && disposition.includes('filename=')) {
+                    filename = disposition.split('filename=')[1].replace(/['"]/g, '');
+                }
+                // Télécharge le fichier
+                const blob = await resp.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                }, 100);
+            } catch (e) {
+                this.error = e.message || "Erreur lors du téléchargement proxy";
+            } finally {
+                this.isLoading = false;
+            }
         }
     }
 }
@@ -768,3 +820,4 @@ button:disabled {
     }
 }
 </style>
+```
