@@ -23,6 +23,12 @@
                         :disabled="isLoading" />
                 </div>
 
+                <div class="form-group">
+                    <label for="ai_extractor">AI Extractor (optional):</label>
+                    <input type="text" id="ai_extractor" v-model="aiExtractor"
+                        placeholder="Optional extraction parameters" :disabled="isLoading" />
+                </div>
+
                 <!-- Cookies section -->
                 <div class="cookies-section">
                     <h3>Cookies</h3>
@@ -190,6 +196,7 @@ export default {
             isAuthenticated: true, // Assuming user is authenticated as topbar handles this
             url: '',
             session_id: '',
+            aiExtractor: '', // Updated property for AI extractor
             isLoading: false,
             error: null,
             response: null,
@@ -215,18 +222,24 @@ export default {
             this.screenshotUrl = null;
 
             try {
+                const requestBody = {
+                    url: this.url,
+                    session_id: this.session_id || '',
+                    actions: this.actions,
+                    cookies: this.cookies
+                };
+
+                if (this.aiExtractor) {
+                    requestBody.ai_extractor = this.aiExtractor; // Include AI extractor only if not empty
+                }
+
                 const response = await fetch(app_url + '/browser/get', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     credentials: 'include',
-                    body: JSON.stringify({
-                        url: this.url,
-                        session_id: this.session_id || '',
-                        actions: this.actions,
-                        cookies: this.cookies
-                    })
+                    body: JSON.stringify(requestBody)
                 });
 
                 if (!response.ok) {
@@ -310,6 +323,9 @@ export default {
                 actions: this.actions,
                 cookies: this.cookies
             };
+            if (this.aiExtractor) {
+                req.ai_extractor = this.aiExtractor; // Include in the copied JSON only if not empty
+            }
             navigator.clipboard.writeText(JSON.stringify(req, null, 2))
                 .then(() => {
                     alert('Requête JSON copiée dans le presse-papier');
@@ -797,6 +813,24 @@ button:disabled {
     padding: 20px 0;
 }
 
+/* Checkbox styling */
+.checkbox-group {
+    display: flex;
+    align-items: center;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: auto;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
 /* Mobile responsiveness for actions and cookies */
 @media (max-width: 768px) {
     .request-container {
@@ -820,4 +854,3 @@ button:disabled {
     }
 }
 </style>
-```
