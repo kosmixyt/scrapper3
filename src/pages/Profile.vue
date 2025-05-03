@@ -88,6 +88,11 @@
                                 </div>
                                 <p class="input-hint">Utilisée pour accéder aux services ChatGPT</p>
                             </div>
+                            
+                            <!-- Bouton de sauvegarde spécifique pour les clés API -->
+                            <button type="button" class="action-button save-api-btn" @click="updateProfile">
+                                <i class="fas fa-save"></i> Sauvegarder les clés API
+                            </button>
                         </div>
 
                         <div class="account-details" v-if="profileData.createdAt">
@@ -369,8 +374,9 @@ const updateProfile = async () => {
             },
             credentials: 'include',
             body: JSON.stringify({
-                email: profileData.email,
-                name: profileData.name
+                name: profileData.name,
+                DeepSeekApiKey: profileData.DeepSeekApiKey,
+                ChatgptApiKey: profileData.ChatgptApiKey
             })
         })
 
@@ -379,7 +385,7 @@ const updateProfile = async () => {
         }
 
         const updatedData = await response.json()
-        Object.assign(profileData, updatedData)
+        Object.assign(profileData, updatedData.user)
         updateSuccess.value = true
 
         setTimeout(() => {
@@ -1073,6 +1079,20 @@ input::placeholder {
     margin-left: 4px;
 }
 
+/* Ajouter un style pour le bouton de sauvegarde des clés API */
+.save-api-btn {
+    margin-top: 15px;
+    background-color: var(--primary);
+    color: var(--secondary);
+    font-weight: 600;
+}
+
+.save-api-btn:hover:not(:disabled) {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
 /* Animations */
 @keyframes fadeIn {
     from {
@@ -1140,4 +1160,3 @@ input::placeholder {
     }
 }
 </style>
-``` 
