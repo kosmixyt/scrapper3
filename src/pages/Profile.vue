@@ -48,6 +48,47 @@
                                 <input type="text" id="name" v-model="profileData.name" required />
                             </div>
                         </div>
+                        
+                        <!-- Nouveaux champs pour les clés API -->
+                        <div class="api-keys-section">
+                            <h3><i class="fas fa-key"></i> Clés API</h3>
+                            
+                            <div class="form-group">
+                                <label for="deepseek-api">Clé API DeepSeek</label>
+                                <div class="input-wrapper">
+                                    <i class="fas fa-robot input-icon"></i>
+                                    <input 
+                                        type="password" 
+                                        id="deepseek-api" 
+                                        v-model="profileData.DeepSeekApiKey" 
+                                        placeholder="Clé API DeepSeek" 
+                                        autocomplete="off"
+                                    />
+                                    <button type="button" class="toggle-password-btn" @click="togglePasswordVisibility('deepseek-api')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <p class="input-hint">Utilisée pour accéder aux services DeepSeek</p>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="chatgpt-api">Clé API ChatGPT</label>
+                                <div class="input-wrapper">
+                                    <i class="fas fa-comment-dots input-icon"></i>
+                                    <input 
+                                        type="password" 
+                                        id="chatgpt-api" 
+                                        v-model="profileData.ChatgptApiKey" 
+                                        placeholder="Clé API ChatGPT" 
+                                        autocomplete="off"
+                                    />
+                                    <button type="button" class="toggle-password-btn" @click="togglePasswordVisibility('chatgpt-api')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <p class="input-hint">Utilisée pour accéder aux services ChatGPT</p>
+                            </div>
+                        </div>
 
                         <div class="account-details" v-if="profileData.createdAt">
                             <div class="detail">
@@ -221,6 +262,8 @@ interface ProfileData {
     id: string;
     email: string;
     name: string;
+    DeepSeekApiKey: string | null;
+    ChatgptApiKey: string | null;
     createdAt: string;
     updatedAt: string;
 }
@@ -260,6 +303,8 @@ const profileData = reactive<ProfileData>({
     id: '',
     email: '',
     name: '',
+    DeepSeekApiKey: '',
+    ChatgptApiKey: '',
     createdAt: '',
     updatedAt: ''
 })
@@ -452,6 +497,27 @@ const copyToken = () => {
 // Masquer le nouveau token
 const hideNewToken = () => {
     newToken.value = null
+}
+
+// Fonction pour basculer entre le masquage et l'affichage de la clé API
+const togglePasswordVisibility = (inputId: string) => {
+    const input = document.getElementById(inputId) as HTMLInputElement;
+    if (input.type === 'password') {
+        input.type = 'text';
+    } else {
+        input.type = 'password';
+    }
+    
+    // Changer aussi l'icône
+    const button = input.nextElementSibling as HTMLButtonElement;
+    const icon = button.querySelector('i');
+    if (icon) {
+        if (input.type === 'password') {
+            icon.className = 'fas fa-eye';
+        } else {
+            icon.className = 'fas fa-eye-slash';
+        }
+    }
 }
 
 // Charger les données au montage du composant
@@ -964,6 +1030,49 @@ input::placeholder {
     justify-content: flex-end;
 }
 
+/* Style pour la section des clés API */
+.api-keys-section {
+    background-color: rgba(45, 45, 45, 0.3);
+    padding: 20px;
+    border-radius: 8px;
+    margin: 15px 0;
+    border: 1px solid var(--border);
+}
+
+.api-keys-section h3 {
+    color: var(--primary);
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.toggle-password-btn {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.3s ease;
+}
+
+.toggle-password-btn:hover {
+    color: var(--primary);
+}
+
+.input-hint {
+    color: var(--text-secondary);
+    font-size: 12px;
+    margin-top: 5px;
+    margin-left: 4px;
+}
+
 /* Animations */
 @keyframes fadeIn {
     from {
@@ -1031,3 +1140,4 @@ input::placeholder {
     }
 }
 </style>
+``` 
