@@ -18,7 +18,6 @@ body {
   padding: 0;
   height: 100%;
   width: 100%;
-  overflow: hidden;
   background-color: #121212;
   color: #e0e0e0;
   box-sizing: border-box;
@@ -36,13 +35,12 @@ body {
   flex-direction: column;
   height: 100vh;
   width: 100vw;
-  overflow: hidden;
+  overflow-x: hidden;
   background-color: #121212;
 }
 
 .main-content {
   flex: 1;
-  overflow: hidden;
   width: 100%;
 }
 

@@ -48,50 +48,80 @@
                                 <input type="text" id="name" v-model="profileData.name" required />
                             </div>
                         </div>
-                        
+
                         <!-- Nouveaux champs pour les clés API -->
                         <div class="api-keys-section">
                             <h3><i class="fas fa-key"></i> Clés API</h3>
-                            
+
                             <div class="form-group">
                                 <label for="deepseek-api">Clé API DeepSeek</label>
                                 <div class="input-wrapper">
                                     <i class="fas fa-robot input-icon"></i>
-                                    <input 
-                                        type="password" 
-                                        id="deepseek-api" 
-                                        v-model="profileData.DeepSeekApiKey" 
-                                        placeholder="Clé API DeepSeek" 
-                                        autocomplete="off"
-                                    />
-                                    <button type="button" class="toggle-password-btn" @click="togglePasswordVisibility('deepseek-api')">
+                                    <input type="password" id="deepseek-api" v-model="profileData.DeepSeekApiKey"
+                                        placeholder="Clé API DeepSeek" autocomplete="off" />
+                                    <button type="button" class="toggle-password-btn"
+                                        @click="togglePasswordVisibility('deepseek-api')">
                                         <i class="fas fa-eye"></i>
                                     </button>
                                 </div>
                                 <p class="input-hint">Utilisée pour accéder aux services DeepSeek</p>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="chatgpt-api">Clé API ChatGPT</label>
                                 <div class="input-wrapper">
                                     <i class="fas fa-comment-dots input-icon"></i>
-                                    <input 
-                                        type="password" 
-                                        id="chatgpt-api" 
-                                        v-model="profileData.ChatgptApiKey" 
-                                        placeholder="Clé API ChatGPT" 
-                                        autocomplete="off"
-                                    />
-                                    <button type="button" class="toggle-password-btn" @click="togglePasswordVisibility('chatgpt-api')">
+                                    <input type="password" id="chatgpt-api" v-model="profileData.ChatgptApiKey"
+                                        placeholder="Clé API ChatGPT" autocomplete="off" />
+                                    <button type="button" class="toggle-password-btn"
+                                        @click="togglePasswordVisibility('chatgpt-api')">
                                         <i class="fas fa-eye"></i>
                                     </button>
                                 </div>
                                 <p class="input-hint">Utilisée pour accéder aux services ChatGPT</p>
                             </div>
-                            
-                            <!-- Bouton de sauvegarde spécifique pour les clés API -->
+
+                            <!-- Nouveaux contrôles pour les préférences d'IA -->
+                            <div class="ai-preferences">
+                                <h4><i class="fas fa-brain"></i> Préférences d'IA</h4>
+
+                                <div class="form-group">
+                                    <label for="ai-provider">Fournisseur d'IA par défaut</label>
+                                    <div class="input-wrapper">
+                                        <i class="fas fa-robot input-icon"></i>
+                                        <select id="ai-provider" v-model="profileData.preferredAiProvider"
+                                            class="form-select">
+                                            <option value="">Sélectionner un fournisseur</option>
+                                            <option value="openai">OpenAI</option>
+                                            <option value="deepseek">DeepSeek</option>
+                                        </select>
+                                    </div>
+                                    <p class="input-hint">Fournisseur d'IA à utiliser par défaut pour les extractions
+                                    </p>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="ai-model">Modèle d'IA par défaut</label>
+                                    <div class="input-wrapper">
+                                        <i class="fas fa-microchip input-icon"></i>
+                                        <select id="ai-model" v-model="profileData.preferredAiModel" class="form-select"
+                                            :disabled="!profileData.preferredAiProvider">
+                                            <option value="">Sélectionner un modèle</option>
+                                            <template v-if="profileData.preferredAiProvider === 'openai'">
+                                                <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+                                                <option value="gpt-4.1-nano">gpt-4.1-nano</option>
+                                            </template>
+                                            <template v-else-if="profileData.preferredAiProvider === 'deepseek'">
+                                                <option value="deepseek-chat">DeepSeek Chat</option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <p class="input-hint">Modèle d'IA à utiliser par défaut pour les extractions</p>
+                                </div>
+                            </div>
+
                             <button type="button" class="action-button save-api-btn" @click="updateProfile">
-                                <i class="fas fa-save"></i> Sauvegarder les clés API
+                                <i class="fas fa-save"></i> Sauvegarder les paramètres d'IA
                             </button>
                         </div>
 
@@ -269,6 +299,8 @@ interface ProfileData {
     name: string;
     DeepSeekApiKey: string | null;
     ChatgptApiKey: string | null;
+    preferredAiProvider: string | null; // Nouveau champ pour le fournisseur d'IA
+    preferredAiModel: string | null; // Nouveau champ pour le modèle d'IA
     createdAt: string;
     updatedAt: string;
 }
@@ -310,6 +342,8 @@ const profileData = reactive<ProfileData>({
     name: '',
     DeepSeekApiKey: '',
     ChatgptApiKey: '',
+    preferredAiProvider: '',
+    preferredAiModel: '',
     createdAt: '',
     updatedAt: ''
 })
@@ -362,9 +396,9 @@ const loadProfile = async () => {
 
 // Mettre à jour le profil
 const updateProfile = async () => {
-    updating.value = true
-    updateSuccess.value = false
-    updateError.value = null
+    updating.value = true;
+    updateSuccess.value = false;
+    updateError.value = null;
 
     try {
         const response = await fetch(app_url + '/users/profile', {
@@ -376,27 +410,29 @@ const updateProfile = async () => {
             body: JSON.stringify({
                 name: profileData.name,
                 DeepSeekApiKey: profileData.DeepSeekApiKey,
-                ChatgptApiKey: profileData.ChatgptApiKey
+                ChatgptApiKey: profileData.ChatgptApiKey,
+                preferredAiProvider: profileData.preferredAiProvider,
+                preferredAiModel: profileData.preferredAiModel
             })
-        })
+        });
 
         if (!response.ok) {
-            throw new Error(`Erreur ${response.status}: ${response.statusText}`)
+            throw new Error(`Erreur ${response.status}: ${response.statusText}`);
         }
 
-        const updatedData = await response.json()
-        Object.assign(profileData, updatedData.user)
-        updateSuccess.value = true
+        const updatedData = await response.json();
+        Object.assign(profileData, updatedData.user);
+        updateSuccess.value = true;
 
         setTimeout(() => {
-            updateSuccess.value = false
-        }, 3000)
+            updateSuccess.value = false;
+        }, 3000);
     } catch (err) {
-        updateError.value = err instanceof Error ? err.message : 'Une erreur est survenue'
+        updateError.value = err instanceof Error ? err.message : 'Une erreur est survenue';
     } finally {
-        updating.value = false
+        updating.value = false;
     }
-}
+};
 
 // Charger les tokens
 const loadTokens = async () => {
@@ -513,7 +549,7 @@ const togglePasswordVisibility = (inputId: string) => {
     } else {
         input.type = 'password';
     }
-    
+
     // Changer aussi l'icône
     const button = input.nextElementSibling as HTMLButtonElement;
     const icon = button.querySelector('i');
@@ -554,22 +590,62 @@ onMounted(() => {
     --success: #2e7d32;
     --warning: #f9a825;
     --info: #0288d1;
+    --scrollbar-bg: #2d2d2d;
+    --scrollbar-thumb: #555;
+}
+
+/* Styles de scrollbar globaux */
+html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-bg);
+    overflow-y: scroll;
+}
+
+body {
+    overflow-y: auto;
+    height: 100%;
+}
+
+/* Style personnalisé pour les navigateurs WebKit (Chrome, Safari) */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--scrollbar-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border-radius: 6px;
+    border: 2px solid var(--scrollbar-bg);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #777;
 }
 
 /* Style global de la page */
 .profile-page {
     min-height: 100vh;
-    width: 100%;
+    width: 100vw;
+    max-width: 100vw;
     background-color: var(--background);
     color: var(--text);
     padding: 20px;
     display: flex;
     justify-content: center;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
 }
 
 .profile-container {
     width: 100%;
-    max-width: 800px;
+    max-width: 1200px;
+    min-width: 0;
+    overflow-y: visible;
+    overflow-x: hidden;
 }
 
 /* En-tête avec tabs */
@@ -1091,6 +1167,52 @@ input::placeholder {
     background-color: var(--primary-dark);
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Style pour les préférences d'IA */
+.ai-preferences {
+    background-color: rgba(50, 50, 50, 0.3);
+    padding: 15px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.ai-preferences h4 {
+    color: var(--primary);
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-select {
+    width: 100%;
+    padding: 12px 12px 12px 40px;
+    background-color: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 16px;
+    color: var(--text);
+    appearance: none;
+    transition: all 0.3s ease;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(129, 199, 132, 0.2);
+}
+
+.form-select option {
+    background-color: var(--card-bg);
+    color: var(--text);
+    padding: 10px;
+}
+
+.form-select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 /* Animations */
