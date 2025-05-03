@@ -1,6 +1,6 @@
 <template>
     <nav class="topbar">
-        <div class="logo">MyApp</div>
+        <div class="logo">Infinite Scrapper</div>
         <div class="links">
             <router-link to="/">Accueil</router-link>
             <!-- Ajoutez d'autres liens ici -->

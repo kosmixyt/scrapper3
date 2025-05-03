@@ -24,9 +24,25 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="ai_extractor">AI Extractor (optional):</label>
+                    <div class="checkbox-group">
+                        <label for="ai_extractor_enabled" class="checkbox-label">
+                            <input type="checkbox" id="ai_extractor_enabled" v-model="aiExtractorEnabled"
+                                :disabled="isLoading" />
+                            Enable AI Extractor
+                        </label>
+                    </div>
+                </div>
+
+                <div v-if="aiExtractorEnabled" class="form-group">
+                    <label for="ai_extractor">AI Extractor Parameters:</label>
                     <input type="text" id="ai_extractor" v-model="aiExtractor"
                         placeholder="Optional extraction parameters" :disabled="isLoading" />
+
+                    <label for="ai_schema" style="margin-top: 10px;">JSON Schema:</label>
+                    <textarea id="ai_schema" v-model="aiSchema"
+                        placeholder="JSON schema with only strings, numbers, arrays or sub-objects"
+                        :disabled="isLoading"></textarea>
+                    <div v-if="schemaError" class="error">{{ schemaError }}</div>
                 </div>
 
                 <!-- Cookies section -->
@@ -197,6 +213,9 @@ export default {
             url: '',
             session_id: '',
             aiExtractor: '', // Updated property for AI extractor
+            aiExtractorEnabled: false, // Toggle for AI extractor
+            aiSchema: '', // JSON schema for AI extractor
+            schemaError: null, // Error message for schema validation
             isLoading: false,
             error: null,
             response: null,
@@ -216,6 +235,50 @@ export default {
                 return;
             }
 
+            if (this.aiExtractorEnabled && this.aiSchema) {
+                try {
+                    const schema = JSON.parse(this.aiSchema);
+                    this.schemaError = null;
+
+                    // Validate schema has only allowed types
+                    const validateSchemaTypes = (obj) => {
+                        for (const key in obj) {
+                            const value = obj[key];
+                            const type = typeof value;
+
+                            if (type === 'object') {
+                                if (Array.isArray(value)) {
+                                    // For arrays, validate each item if not empty
+                                    if (value.length > 0) {
+                                        for (const item of value) {
+                                            if (typeof item === 'object' && item !== null) {
+                                                if (!validateSchemaTypes(item)) return false;
+                                            } else if (!['int', 'float', 'str'].includes(item)) {
+                                                return false;
+                                            }
+                                        }
+                                    }
+                                } else if (value !== null) {
+                                    // For objects, recursively validate
+                                    if (!validateSchemaTypes(value)) return false;
+                                }
+                            } else if (!['int', 'float', 'str'].includes(value)) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    };
+
+                    if (!validateSchemaTypes(schema)) {
+                        this.schemaError = 'Schema can only contain strings, numbers, arrays or sub-objects';
+                        return;
+                    }
+                } catch (e) {
+                    this.schemaError = 'Invalid JSON schema';
+                    return;
+                }
+            }
+
             this.isLoading = true;
             this.error = null;
             this.response = null;
@@ -229,8 +292,9 @@ export default {
                     cookies: this.cookies
                 };
 
-                if (this.aiExtractor) {
-                    requestBody.ai_extractor = this.aiExtractor; // Include AI extractor only if not empty
+                if (this.aiExtractorEnabled) {
+                    requestBody.ai_extractor = this.aiExtractor; // Include AI extractor only if enabled
+                    requestBody.ai_schema = this.aiSchema; // Include JSON schema if provided
                 }
 
                 const response = await fetch(app_url + '/browser/get', {
@@ -323,8 +387,9 @@ export default {
                 actions: this.actions,
                 cookies: this.cookies
             };
-            if (this.aiExtractor) {
-                req.ai_extractor = this.aiExtractor; // Include in the copied JSON only if not empty
+            if (this.aiExtractorEnabled) {
+                req.ai_extractor = this.aiExtractor; // Include in the copied JSON only if enabled
+                req.ai_schema = this.aiSchema; // Include JSON schema if provided
             }
             navigator.clipboard.writeText(JSON.stringify(req, null, 2))
                 .then(() => {
@@ -454,6 +519,18 @@ input {
     background-color: #2d2d2d;
     color: #e0e0e0;
     box-sizing: border-box;
+}
+
+textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+    box-sizing: border-box;
+    font-family: monospace;
+    min-height: 80px;
 }
 
 button {
